@@ -1,4 +1,4 @@
-name: ICT Tutor No-Fail Build
+name: ICT Tutor Deep Repair Build
 on: [push]
 jobs:
   build:
@@ -13,31 +13,36 @@ jobs:
 
       - name: Attempt Web Build
         run: |
-          ROOT_DIR=$(find . -name package.json -printf '%h' -quit)
-          cd "$ROOT_DIR"
+          # Find where package.json is
+          WEB_DIR=$(find . -name package.json -printf '%h' -quit)
+          cd "$WEB_DIR"
           npm install --force --legacy-peer-deps
-          # The '|| true' tells the computer: "Even if this fails, keep going!"
+          # Build the visuals, but don't stop if it warns about Craco
           CI=false npm run build --if-present || true
 
       - name: Sync and Final APK Build
         run: |
-          # Create a dummy build folder if the build failed to make one
-          # This prevents the "White Screen" by ensuring there's SOMETHING to sync
-          mkdir -p build && touch build/index.html
+          # 1. Find the Android engine (gradlew)
+          GRADLE_PATH=$(find . -name gradlew -printf '%h' -quit)
           
-          # Find Android folder
-          ANDROID_DIR=$(find . -name gradlew -printf '%h' -quit)
-          cd "$ANDROID_DIR"
+          # 2. If it's missing, try to add it back
+          if [ -z "$GRADLE_PATH" ]; then
+            echo "Android folder missing! Attempting to regenerate..."
+            npx cap add android || true
+            GRADLE_PATH=$(find . -name gradlew -printf '%h' -quit)
+          fi
           
-          # Force the Android build
+          # 3. Go to that folder and build
+          cd "$GRADLE_PATH"
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
       - name: Deliver APK
         uses: actions/upload-artifact@v4
         with:
-          name: ICT-Tutor-Package
+          name: ICT-Tutor-Repaired
           path: "**/*.apk"
+          
           
           
           
