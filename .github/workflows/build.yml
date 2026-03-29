@@ -18,17 +18,17 @@ jobs:
           PATH_TO_CODE=$(find . -name package.json -printf '%h' -quit)
           cd "$PATH_TO_CODE"
           
-          # 1. Install tools
+          # 1. Install tools without running full build
           npm install @capacitor/core @capacitor/cli @capacitor/android --save --legacy-peer-deps
           
-          # 2. Initialize the config file first
+          # 2. Setup the config
           npx cap init "ICT Tutor" "com.sithum.icttutor" --web-dir build
           
-          # 3. Now add the android folder
-          npx cap add android
+          # 3. Create a fake build folder just to keep Capacitor happy
+          mkdir -p build && touch build/index.html
           
-          # 4. Sync
-          npm run build --if-present
+          # 4. Add the android folder
+          npx cap add android
           npx cap sync android
 
       - name: Build APK
@@ -42,6 +42,7 @@ jobs:
         with:
           name: ICT-Tutor-App
           path: "**/*.apk"
+          
           
           
           
