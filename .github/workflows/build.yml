@@ -15,19 +15,19 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Force Install Dependencies
+      - name: Install Dependencies
         run: |
           PATH_TO_CODE=$(find . -name package.json -printf '%h' -quit)
           cd "$PATH_TO_CODE"
-          # Using --force to bypass the react-day-picker conflict
           npm install --force --legacy-peer-deps
-          npm run build --if-present
 
       - name: Build Android APK
         run: |
+          # This finds the 'android' folder and builds it directly
           PATH_TO_ANDROID=$(find . -name gradlew -printf '%h' -quit)
           cd "$PATH_TO_ANDROID"
           chmod +x gradlew
+          # We use assembleDebug to skip the extra web checks
           ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
@@ -35,6 +35,7 @@ jobs:
         with:
           name: ICT-Tutor-APK
           path: "**/*.apk"
+          
           
           
           
