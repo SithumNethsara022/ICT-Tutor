@@ -1,4 +1,4 @@
-name: ICT Tutor Visual Fix
+name: ICT Tutor Universal Fix
 on: [push]
 jobs:
   build:
@@ -13,33 +13,34 @@ jobs:
 
       - name: Build Web Assets
         run: |
-          # 1. Enter the frontend folder immediately
-          cd frontend
+          # Automatically find the folder containing package.json
+          ROOT_DIR=$(find . -name package.json -printf '%h' -quit)
+          cd "$ROOT_DIR"
+          echo "Found web code in: $ROOT_DIR"
           
-          # 2. Force install dependencies
           npm install --force --legacy-peer-deps
+          CI=false npm run build --if-present
+
+      - name: Sync and Build APK
+        run: |
+          # Automatically find the folder containing the Android project
+          ANDROID_DIR=$(find . -name gradlew -printf '%h' -quit)
+          cd "$ANDROID_DIR"
+          echo "Found Android project in: $ANDROID_DIR"
           
-          # 3. Create a production build of your website
-          # This creates the actual "visuals" for the app
-          CI=false npm run build
-
-      - name: Sync to Android
-        run: |
-          cd frontend
-          # Tell Capacitor to take the new 'build' folder and put it in Android
-          npx cap sync android
-
-      - name: Build Final APK
-        run: |
-          cd frontend/android
+          # Sync Capacitor if it's being used
+          if [ -f "../../capacitor.config.ts" ] || [ -f "../../capacitor.config.json" ]; then
+            cd ../.. && npx cap sync android && cd android
+          fi
+          
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
       - name: Deliver APK
         uses: actions/upload-artifact@v4
         with:
-          name: ICT-Tutor-Working
-          path: "frontend/android/app/build/outputs/apk/debug/app-debug.apk"
+          name: ICT-Tutor-Final
+          path: "**/*.apk"
           
           
           
