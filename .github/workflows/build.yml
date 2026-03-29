@@ -1,38 +1,41 @@
-name: Build Android APK
-on:
-  push:
-    branches: [ main ]
+name: Generate and Build APK
+on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Install Dependencies
+      - name: Create Android Folder
         run: |
-          # Go into the frontend folder where package.json lives
-          cd frontend
+          # 1. Find the code
+          cd $(find . -name package.json -printf '%h' -quit)
+          
+          # 2. Install the tools
           npm install --force --legacy-peer-deps
+          npm install @capacitor/android
+          
+          # 3. Create the missing 'android' folder automatically
+          npx cap add android
+          
+          # 4. Sync your web files into that folder
+          npm run build --if-present
+          npx cap sync android
 
-      - name: Build Android APK
+      - name: Build the APK
         run: |
-          # Go into the specific android folder inside frontend
-          cd frontend/android
+          cd $(find . -name gradlew -printf '%h' -quit)
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Deliver APK
         uses: actions/upload-artifact@v4
         with:
-          name: ICT-Tutor-APK
-          path: "frontend/android/app/build/outputs/apk/debug/app-debug.apk"
+          name: ICT-Tutor-App
+          path: "**/*.apk"
+          
           
           
           
