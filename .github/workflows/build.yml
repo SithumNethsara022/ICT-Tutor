@@ -15,13 +15,27 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install Dependencies
-        # This adds a timeout so it doesn't spin forever
-        run: npm install --legacy-peer-deps --network-timeout 100000
-
-      - name: Build APK
+      - name: Install & Build
         run: |
-          cd android
+          # 1. Find where package.json is and go there
+          PATH_TO_CODE=$(find . -name package.json -printf '%h' -quit)
+          cd "$PATH_TO_CODE"
+          echo "Found code in: $PATH_TO_CODE"
+          
+          # 2. Install with the correct timeout flag
+          npm install --legacy-peer-deps --network-timeout=100000
+          
+          # 3. Build the web files
+          npm run build --if-present
+
+      - name: Build Android
+        run: |
+          # 1. Find where the 'gradlew' file is and go there
+          PATH_TO_ANDROID=$(find . -name gradlew -printf '%h' -quit)
+          cd "$PATH_TO_ANDROID"
+          echo "Found Android in: $PATH_TO_ANDROID"
+          
+          # 2. Build the APK
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
@@ -29,7 +43,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ICT-Tutor-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: "**/*.apk"
+          
           
           
     
