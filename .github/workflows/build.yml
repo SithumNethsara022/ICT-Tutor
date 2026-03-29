@@ -1,40 +1,49 @@
-name: Generate and Build APK
+name: Create Android Folder and Build
 on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with: { java-version: '17', distribution: 'temurin' }
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Create Android Folder
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Generate Android Folder
         run: |
-          # 1. Find the code
-          cd $(find . -name package.json -printf '%h' -quit)
+          # 1. Find where your package.json is
+          PATH_TO_CODE=$(find . -name package.json -printf '%h' -quit)
+          cd "$PATH_TO_CODE"
           
-          # 2. Install the tools
+          # 2. Install Capacitor tools
           npm install --force --legacy-peer-deps
-          npm install @capacitor/android
+          npm install @capacitor/core @capacitor/cli @capacitor/android
           
-          # 3. Create the missing 'android' folder automatically
+          # 3. Create the 'android' folder from scratch
+          # This replaces the need for a manual upload!
           npx cap add android
           
-          # 4. Sync your web files into that folder
+          # 4. Prepare the web files
           npm run build --if-present
           npx cap sync android
 
-      - name: Build the APK
+      - name: Build APK
         run: |
           cd $(find . -name gradlew -printf '%h' -quit)
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Deliver APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ICT-Tutor-App
           path: "**/*.apk"
+          
+
           
           
           
