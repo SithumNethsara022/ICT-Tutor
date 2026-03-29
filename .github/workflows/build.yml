@@ -1,4 +1,4 @@
-name: Full Visual Build
+name: ICT Tutor Visual Fix
 on: [push]
 jobs:
   build:
@@ -11,32 +11,35 @@ jobs:
         uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build Web and Android
+      - name: Build Web Assets
         run: |
-          # 1. Go to your code folder
-          PATH_TO_CODE=$(find . -name package.json -printf '%h' -quit)
-          cd "$PATH_TO_CODE"
+          # 1. Enter the frontend folder immediately
+          cd frontend
           
-          # 2. Install everything
+          # 2. Force install dependencies
           npm install --force --legacy-peer-deps
           
-          # 3. FIX: Try to run the build. If it fails, we use a standard build.
-          npm run build || npx react-scripts build
-          
-          # 4. Sync the new files into the Android folder
+          # 3. Create a production build of your website
+          # This creates the actual "visuals" for the app
+          CI=false npm run build
+
+      - name: Sync to Android
+        run: |
+          cd frontend
+          # Tell Capacitor to take the new 'build' folder and put it in Android
           npx cap sync android
 
-      - name: Build APK
+      - name: Build Final APK
         run: |
-          cd $(find . -name gradlew -printf '%h' -quit)
+          cd frontend/android
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
       - name: Deliver APK
         uses: actions/upload-artifact@v4
         with:
-          name: ICT-Tutor-Visual-App
-          path: "**/*.apk"
+          name: ICT-Tutor-Working
+          path: "frontend/android/app/build/outputs/apk/debug/app-debug.apk"
           
           
           
