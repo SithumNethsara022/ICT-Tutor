@@ -1,4 +1,4 @@
-name: Force Create Android and Build
+name: Final Build APK
 on: [push]
 jobs:
   build:
@@ -13,19 +13,19 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Fix Dependencies and Generate Folder
+      - name: Create Android Project
         run: |
-          # 1. Find the code folder
           PATH_TO_CODE=$(find . -name package.json -printf '%h' -quit)
           cd "$PATH_TO_CODE"
           
-          # 2. Force install the Capacitor tools (this skips the conflict)
+          # 1. Force install tools
           npm install @capacitor/core @capacitor/cli @capacitor/android --save --legacy-peer-deps
           
-          # 3. Create the android folder
-          npx cap add android
+          # 2. Create the Android folder with a specific ID and Name
+          # This fixes the "Missing appId" error!
+          npx cap add android --app-id "com.sithum.icttutor" --app-name "ICT Tutor"
           
-          # 4. Final sync
+          # 3. Build and Sync
           npm run build --if-present
           npx cap sync android
 
@@ -35,11 +35,12 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Deliver APK
         uses: actions/upload-artifact@v4
         with:
           name: ICT-Tutor-App
           path: "**/*.apk"
+          
           
           
 
