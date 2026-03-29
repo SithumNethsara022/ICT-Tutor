@@ -17,24 +17,23 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          PATH_TO_CODE=$(find . -name package.json -printf '%h' -quit)
-          cd "$PATH_TO_CODE"
+          # Go into the frontend folder where package.json lives
+          cd frontend
           npm install --force --legacy-peer-deps
 
       - name: Build Android APK
         run: |
-          # This finds the 'android' folder and builds it directly
-          PATH_TO_ANDROID=$(find . -name gradlew -printf '%h' -quit)
-          cd "$PATH_TO_ANDROID"
+          # Go into the specific android folder inside frontend
+          cd frontend/android
           chmod +x gradlew
-          # We use assembleDebug to skip the extra web checks
           ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ICT-Tutor-APK
-          path: "**/*.apk"
+          path: "frontend/android/app/build/outputs/apk/debug/app-debug.apk"
+          
           
           
           
