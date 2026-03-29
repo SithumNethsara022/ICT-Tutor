@@ -15,27 +15,18 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install & Build
+      - name: Force Install Dependencies
         run: |
-          # 1. Find where package.json is and go there
           PATH_TO_CODE=$(find . -name package.json -printf '%h' -quit)
           cd "$PATH_TO_CODE"
-          echo "Found code in: $PATH_TO_CODE"
-          
-          # 2. Install with the correct timeout flag
-          npm install --legacy-peer-deps --network-timeout=100000
-          
-          # 3. Build the web files
+          # Using --force to bypass the react-day-picker conflict
+          npm install --force --legacy-peer-deps
           npm run build --if-present
 
-      - name: Build Android
+      - name: Build Android APK
         run: |
-          # 1. Find where the 'gradlew' file is and go there
           PATH_TO_ANDROID=$(find . -name gradlew -printf '%h' -quit)
           cd "$PATH_TO_ANDROID"
-          echo "Found Android in: $PATH_TO_ANDROID"
-          
-          # 2. Build the APK
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
@@ -44,6 +35,7 @@ jobs:
         with:
           name: ICT-Tutor-APK
           path: "**/*.apk"
+          
           
           
           
