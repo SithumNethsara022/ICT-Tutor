@@ -1,4 +1,4 @@
-name: Create Android Folder and Build
+name: Force Create Android and Build
 on: [push]
 jobs:
   build:
@@ -13,21 +13,19 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Generate Android Folder
+      - name: Fix Dependencies and Generate Folder
         run: |
-          # 1. Find where your package.json is
+          # 1. Find the code folder
           PATH_TO_CODE=$(find . -name package.json -printf '%h' -quit)
           cd "$PATH_TO_CODE"
           
-          # 2. Install Capacitor tools
-          npm install --force --legacy-peer-deps
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          # 2. Force install the Capacitor tools (this skips the conflict)
+          npm install @capacitor/core @capacitor/cli @capacitor/android --save --legacy-peer-deps
           
-          # 3. Create the 'android' folder from scratch
-          # This replaces the need for a manual upload!
+          # 3. Create the android folder
           npx cap add android
           
-          # 4. Prepare the web files
+          # 4. Final sync
           npm run build --if-present
           npx cap sync android
 
@@ -42,6 +40,7 @@ jobs:
         with:
           name: ICT-Tutor-App
           path: "**/*.apk"
+          
           
 
           
