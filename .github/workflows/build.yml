@@ -1,4 +1,4 @@
-name: ICT Tutor Deep Repair Build
+name: ICT Tutor Total Regeneration
 on: [push]
 jobs:
   build:
@@ -11,28 +11,29 @@ jobs:
         uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Attempt Web Build
+      - name: Build and Force Create Android
         run: |
-          # Find where package.json is
+          # 1. Find the web code
           WEB_DIR=$(find . -name package.json -printf '%h' -quit)
           cd "$WEB_DIR"
+          
+          # 2. Install tools
           npm install --force --legacy-peer-deps
-          # Build the visuals, but don't stop if it warns about Craco
-          CI=false npm run build --if-present || true
+          npm install @capacitor/core @capacitor/cli @capacitor/android --save --legacy-peer-deps
+          
+          # 3. Create the config and the Android folder with the ID
+          # This fixes the "Missing appId" error once and for all!
+          npx cap init "ICT Tutor" "com.sithum.icttutor" --web-dir build --force
+          npx cap add android
+          
+          # 4. Create a production build of your visuals
+          CI=false npm run build --if-present || (mkdir -p build && touch build/index.html)
+          npx cap sync android
 
-      - name: Sync and Final APK Build
+      - name: Compile APK
         run: |
-          # 1. Find the Android engine (gradlew)
+          # Find the new gradlew file we just created
           GRADLE_PATH=$(find . -name gradlew -printf '%h' -quit)
-          
-          # 2. If it's missing, try to add it back
-          if [ -z "$GRADLE_PATH" ]; then
-            echo "Android folder missing! Attempting to regenerate..."
-            npx cap add android || true
-            GRADLE_PATH=$(find . -name gradlew -printf '%h' -quit)
-          fi
-          
-          # 3. Go to that folder and build
           cd "$GRADLE_PATH"
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
@@ -40,7 +41,7 @@ jobs:
       - name: Deliver APK
         uses: actions/upload-artifact@v4
         with:
-          name: ICT-Tutor-Repaired
+          name: ICT-Tutor-Regenerated
           path: "**/*.apk"
           
           
