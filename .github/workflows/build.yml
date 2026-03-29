@@ -1,4 +1,4 @@
-name: Final Build APK
+name: Full Visual Build
 on: [push]
 jobs:
   build:
@@ -9,26 +9,21 @@ jobs:
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+        with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Create Android Project
+      - name: Build Web and Android
         run: |
+          # 1. Go to your code folder
           PATH_TO_CODE=$(find . -name package.json -printf '%h' -quit)
           cd "$PATH_TO_CODE"
           
-          # 1. Install tools without running full build
-          npm install @capacitor/core @capacitor/cli @capacitor/android --save --legacy-peer-deps
+          # 2. Install everything
+          npm install --force --legacy-peer-deps
           
-          # 2. Setup the config
-          npx cap init "ICT Tutor" "com.sithum.icttutor" --web-dir build
+          # 3. FIX: Try to run the build. If it fails, we use a standard build.
+          npm run build || npx react-scripts build
           
-          # 3. Create a fake build folder just to keep Capacitor happy
-          mkdir -p build && touch build/index.html
-          
-          # 4. Add the android folder
-          npx cap add android
+          # 4. Sync the new files into the Android folder
           npx cap sync android
 
       - name: Build APK
@@ -40,16 +35,8 @@ jobs:
       - name: Deliver APK
         uses: actions/upload-artifact@v4
         with:
-          name: ICT-Tutor-App
+          name: ICT-Tutor-Visual-App
           path: "**/*.apk"
-          
-          
-          
-          
-          
-
-          
-          
           
           
           
